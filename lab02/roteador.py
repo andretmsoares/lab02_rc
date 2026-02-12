@@ -20,9 +20,9 @@ class Router:
 
         :param my_address: O endereço (ip:porta) deste roteador.
         :param neighbors: Um dicionário contendo os vizinhos diretos e o custo do link.
-                          Ex: {'127.0.0.1:5001': 5, '127.0.0.1:5002': 10}
+        Ex: {'127.0.0.1:5001': 5, '127.0.0.1:5002': 10}
         :param my_network: A rede que este roteador administra diretamente.
-                           Ex: '10.0.1.0/24'
+        Ex: '10.0.1.0/24'
         :param update_interval: O intervalo em segundos para enviar atualizações, o tempo que o roteador espera 
                                 antes de enviar atualizações para os vizinhos.        """
         self.my_address = my_address
@@ -44,7 +44,19 @@ class Router:
         # 3. Adicione as rotas para seus vizinhos diretos, usando o dicionário
         #    'self.neighbors'. Para cada vizinho, o 'cost' é o custo do link direto
         #    e o 'next_hop' é o endereço do próprio vizinho.
+        
         self.routing_table = {}
+        #Rota para a propria rede
+        self.routing_table[self.my_network] = {
+            'cost':0,
+            'next_hop': self.my_address
+        }
+        #Rota para vizinhos diretos
+        for vizinho, custo in self.neighbors.items():
+             self.routing_table[vizinho] = {
+                'cost':custo,
+                'next_hop': vizinho
+            }
 
         print("Tabela de roteamento inicial:")
         print(json.dumps(self.routing_table, indent=4))
