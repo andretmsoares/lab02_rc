@@ -32,26 +32,29 @@ class Router:
 
         # TODO: Este é o local para criar e inicializar sua tabela de roteamento.
         #
+        
+        
         # 1. Crie a estrutura de dados para a tabela de roteamento. Um dicionário é
         #    uma ótima escolha, onde as chaves são as redes de destino (ex: '10.0.1.0/24')
         #    e os valores são outro dicionário contendo 'cost' e 'next_hop'.
         #    Ex: {'10.0.1.0/24': {'cost': 0, 'next_hop': '10.0.1.0/24'}}
-        #
+        
+        self.routing_table = {}
+        
         # 2. Adicione a rota para a rede que este roteador administra diretamente
         #    (a rede em 'self.my_network'). O custo para uma rede diretamente
         #    conectada é 0, e o 'next_hop' pode ser a própria rede ou o endereço do roteador.
         #
-        # 3. Adicione as rotas para seus vizinhos diretos, usando o dicionário
-        #    'self.neighbors'. Para cada vizinho, o 'cost' é o custo do link direto
-        #    e o 'next_hop' é o endereço do próprio vizinho.
         
-        self.routing_table = {}
-        #Rota para a propria rede
         self.routing_table[self.my_network] = {
             'cost':0,
             'next_hop': self.my_address
         }
-        #Rota para vizinhos diretos
+        
+        # 3. Adicione as rotas para seus vizinhos diretos, usando o dicionário
+        #    'self.neighbors'. Para cada vizinho, o 'cost' é o custo do link direto
+        #    e o 'next_hop' é o endereço do próprio vizinho.
+        
         for vizinho, custo in self.neighbors.items():
              self.routing_table[vizinho] = {
                 'cost':custo,
@@ -149,22 +152,71 @@ def receive_update():
     # TODO: Implemente a lógica de Bellman-Ford aqui.
     #
     # 1. Verifique se o remetente é um vizinho conhecido.
+    
+    if sender_address not in router_instance.neighbors:
+        print(f'{sender_address} -> Não é vizinho direto')
+        return jsonify({'status': 'ignored'}), 200
+    
     # 2. Obtenha o custo do link direto para este vizinho a partir de `router_instance.neighbors`.
+    
+    custo_direto = router_instance.neighbors[sender_address]
+    
     # 3. Itere sobre cada rota (`network`, `info`) na `sender_table` recebida.
+    
+    tabela_atualizada = False
+    
+    for network, info in sender_table:
+        
     # 4. Calcule o novo custo para chegar à `network`:
     #    novo_custo = custo_do_link_direto + info['cost']
+    
+        custo_vizinho = info['cost']
+        novo_custo = custo_direto + custo_vizinho
+        
     # 5. Verifique sua própria tabela de roteamento:
     #    a. Se você não conhece a `network`, adicione-a à sua tabela com o
     #       `novo_custo` e o `next_hop` sendo o `sender_address`.
+    
+        if network not in router_instance.routing_table:
+            
+            router_instance.routing_table[network] = {
+                'cost': novo_custo,
+                'next_hop': sender_address
+            }
+            
+            tabela_atualizada = True
+            
     #    b. Se você já conhece a `network`, verifique se o `novo_custo` é menor
     #       que o custo que você já tem. Se for, atualize sua tabela com o
     #       novo custo e o novo `next_hop`.
+    
+        else: 
+            rota_atual = router_instance.routing_table[network]
+            cost_atual = rota_atual['cost']
+            next_hop_atual = rota_atual['next_hop']
+            
+            if novo_custo < cost_atual:
+                router_instance.routing_table[network] = {
+                    'cost': novo_custo,
+                    'next_hop': sender_address
+                }
+                
+                tabela_atualizada = True
+            
     #    c. (Opcional, mas importante para robustez): Se o `next_hop` para uma rota
     #       for o `sender_address`, você deve sempre atualizar o custo, mesmo que
     #       seja maior (isso ajuda a propagar notícias de links quebrados).
+    
+            elif next_hop_atual == sender_address:
+                router_instance.routing_table[network]['cost'] = novo_custo
+                tabela_atualizada = True
     #
     # 6. Mantenha um registro se sua tabela mudou ou não. Se mudou, talvez seja
     #    uma boa ideia imprimir a nova tabela no console.
+    
+    if tabela_atualizada:
+        print("Tabela de roteamento Atualizada:")
+        print(json.dumps(router_instance.routing_table, indent=4))
 
     return jsonify({"status": "success", "message": "Update received"}), 200
 
