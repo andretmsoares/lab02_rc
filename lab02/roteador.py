@@ -5,6 +5,7 @@ import json
 import threading
 import time
 from argparse import ArgumentParser
+import copy
 
 import requests
 from flask import Flask, jsonify, request
@@ -31,9 +32,6 @@ class Router:
         self.update_interval = update_interval
 
         # TODO: Este é o local para criar e inicializar sua tabela de roteamento.
-        #
-        
-        
         # 1. Crie a estrutura de dados para a tabela de roteamento. Um dicionário é
         #    uma ótima escolha, onde as chaves são as redes de destino (ex: '10.0.1.0/24')
         #    e os valores são outro dicionário contendo 'cost' e 'next_hop'.
@@ -83,6 +81,78 @@ class Router:
             except Exception as e:
                 print(f"Erro durante a atualização periódida: {e}")
 
+    def ip_to_int(self, ip):
+        a, b, c, d = map(int, ip.split('.'))
+        return (a << 24) | (b << 16) | (c << 8) | d
+
+    def int_to_ip(self, num):
+        return ".".join([
+            str((num >> 24) & 255),
+            str((num >> 16) & 255),
+            str((num >> 8) & 255),
+            str(num & 255)
+        ])
+
+    def verifica_sumarizacao(self, net1, net2):
+        ip1, prefix1 = net1.split('/')
+        ip2, prefix2 = net2.split('/')
+
+        # verifica máscaras
+        if prefix1 != prefix2: return None
+
+        #transforma ip em int
+        ip1_int = self.int_to_ip(ip1)
+        ip2_int = self.int_to_ip(ip2)
+
+        bloco = 2 ** (32 - prefix1)
+
+        # verifica se sao adjacentes
+        if abs(ip1_int - ip2_int) != bloco: return None
+
+        novo_prefixo = prefix1 - 1
+        mask = (0xFFFFFFFF << (32 - novo_prefixo)) & 0xFFFFFFFF
+        supernet_int = ip1_int & mask
+
+        supernet_ip = self.int_to_ip(supernet_int)
+
+        return f"{supernet_ip}/{novo_prefixo}"
+
+    def aplicar_sumarizacao(self, tabela):
+        redes = list(tabela.keys())
+        removidas = set()
+
+        for i in range(len(redes)):
+            for j in range(i + 1, len(redes)):
+
+                net1 = redes[i]
+                net2 = redes[j]
+
+                if net1 in removidas or net2 in removidas:
+                    continue
+
+                info1 = tabela[net1]
+                info2 = tabela[net2]
+
+                # Regra principal: mesmo next_hop
+                if info1['next_hop'] != info2['next_hop']:
+                    continue
+
+                supernet = self.tentar_sumarizar(net1, net2)
+
+                if supernet:
+                    novo_custo = max(info1['cost'], info2['cost'])
+
+                    tabela[supernet] = {
+                        'cost': novo_custo,
+                        'next_hop': info1['next_hop']
+                    }
+
+                    removidas.add(net1)
+                    removidas.add(net2)
+
+        for net in removidas:
+            tabela.pop(net, None)
+
     def send_updates_to_neighbors(self):
         """
         Envia a tabela de roteamento (potencialmente sumarizada) para todos os vizinhos.
@@ -96,7 +166,11 @@ class Router:
         # 2. IMPLEMENTE A LÓGICA DE SUMARIZAÇÃO nesta cópia.
         # 3. ENVIE A CÓPIA SUMARIZADA no payload, em vez da tabela original.
         
-        tabela_para_enviar = self.routing_table # ATENÇÃO: Substitua pela cópia sumarizada.
+        # Criação de cópia
+        tabela_para_enviar = copy.deepcopy(self.routing_table) # ATENÇÃO: Substitua pela cópia sumarizada.
+
+        # Sumarizando a cópia
+        self.summarize(tabela_para_enviar)
 
         payload = {
             "sender_address": self.my_address,
