@@ -117,7 +117,7 @@ class Router:
 
         return f"{supernet_ip}/{novo_prefixo}"
 
-    def aplicar_sumarizacao(self, tabela):
+    def summarize(self, tabela):
         redes = list(tabela.keys())
         removidas = set()
 
@@ -137,7 +137,7 @@ class Router:
                 if info1['next_hop'] != info2['next_hop']:
                     continue
 
-                supernet = self.tentar_sumarizar(net1, net2)
+                supernet = self.verifica_sumarizacao(net1, net2)
 
                 if supernet:
                     novo_custo = max(info1['cost'], info2['cost'])
