@@ -46,7 +46,7 @@ class Router:
         
         self.routing_table[self.my_network] = {
             'cost':0,
-            'next_hop': self.my_address
+            'next_hop': self.my_network
         }
         
         # 3. Adicione as rotas para seus vizinhos diretos, usando o dicionário
@@ -96,6 +96,9 @@ class Router:
     def verifica_sumarizacao(self, net1, net2):
         ip1, prefix1 = net1.split('/')
         ip2, prefix2 = net2.split('/')
+        
+        prefix1 = int(prefix1)
+        prefix2 = int(prefix2)
 
         # verifica máscaras
         if prefix1 != prefix2: return None
@@ -126,9 +129,13 @@ class Router:
 
                 net1 = redes[i]
                 net2 = redes[j]
+                
+                if '/' not in net1 or '/' not in net2:
+                    continue
 
                 if net1 in removidas or net2 in removidas:
                     continue
+                
 
                 info1 = tabela[net1]
                 info2 = tabela[net2]
