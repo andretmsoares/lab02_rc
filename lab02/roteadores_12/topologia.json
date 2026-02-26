@@ -1,0 +1,74 @@
+[
+  {
+    "name": "R1",
+    "network": "10.1.0.0/24",
+    "address": "150.165.42.1:5001",
+    "config_file": "roteadores_12/R1.csv"
+  },
+  {
+    "name": "R2",
+    "network": "10.2.0.0/24",
+    "address": "150.165.42.2:5002",
+    "config_file": "roteadores_12/R2.csv"
+  },
+  {
+    "name": "R3",
+    "network": "10.3.0.0/24",
+    "address": "150.165.42.3:5003",
+    "config_file": "roteadores_12/R3.csv"
+  },
+  {
+    "name": "R4",
+    "network": "10.4.0.0/24",
+    "address": "150.165.42.4:5004",
+    "config_file": "roteadores_12/R4.csv"
+  },
+  {
+    "name": "R5",
+    "network": "10.5.0.0/24",
+    "address": "150.165.42.5:5005",
+    "config_file": "roteadores_12/R5.csv"
+  },
+  {
+    "name": "R6",
+    "network": "10.6.0.0/24",
+    "address": "150.165.42.6:5006",
+    "config_file": "roteadores_12/R6.csv"
+  },
+  {
+    "name": "R7",
+    "network": "10.7.0.0/24",
+    "address": "150.165.42.7:5007",
+    "config_file": "roteadores_12/R7.csv"
+  },
+  {
+    "name": "R8",
+    "network": "10.8.0.0/24",
+    "address": "150.165.42.8:5008",
+    "config_file": "roteadores_12/R8.csv"
+  },
+  {
+    "name": "R9",
+    "network": "10.9.0.0/24",
+    "address": "150.165.42.9:5009",
+    "config_file": "roteadores_12/R9.csv"
+  },
+  {
+    "name": "R10",
+    "network": "10.10.0.0/24",
+    "address": "150.165.42.10:5010",
+    "config_file": "roteadores_12/R10.csv"
+  },
+  {
+    "name": "R11",
+    "network": "10.11.0.0/24",
+    "address": "150.165.42.11:5011",
+    "config_file": "roteadores_12/R11.csv"
+  },
+  {
+    "name": "R12",
+    "network": "10.12.0.0/24",
+    "address": "150.165.42.12:5012",
+    "config_file": "roteadores_12/R12.csv"
+  }
+]
