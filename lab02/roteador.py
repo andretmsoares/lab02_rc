@@ -46,7 +46,7 @@ class Router:
         
         self.routing_table[self.my_network] = {
             'cost':0,
-            'next_hop': self.my_address
+            'next_hop': self.my_network
         }
         
         # 3. Adicione as rotas para seus vizinhos diretos, usando o dicionário
@@ -96,13 +96,16 @@ class Router:
     def verifica_sumarizacao(self, net1, net2):
         ip1, prefix1 = net1.split('/')
         ip2, prefix2 = net2.split('/')
+        
+        prefix1 = int(prefix1)
+        prefix2 = int(prefix2)
 
         # verifica máscaras
         if prefix1 != prefix2: return None
 
         #transforma ip em int
-        ip1_int = self.int_to_ip(ip1)
-        ip2_int = self.int_to_ip(ip2)
+        ip1_int = self.ip_to_int(ip1)
+        ip2_int = self.ip_to_int(ip2)
 
         bloco = 2 ** (32 - prefix1)
 
@@ -126,9 +129,13 @@ class Router:
 
                 net1 = redes[i]
                 net2 = redes[j]
+                
+                if '/' not in net1 or '/' not in net2:
+                    continue
 
                 if net1 in removidas or net2 in removidas:
                     continue
+                
 
                 info1 = tabela[net1]
                 info2 = tabela[net2]
@@ -170,8 +177,10 @@ class Router:
         tabela_para_enviar = copy.deepcopy(self.routing_table) # ATENÇÃO: Substitua pela cópia sumarizada.
 
         # Sumarizando a cópia
+        #print("ENTRANDO EM SUMMARIZE")
         self.summarize(tabela_para_enviar)
-
+        #print("SAINDO DE SUMMARIZE")
+        
         payload = {
             "sender_address": self.my_address,
             "routing_table": tabela_para_enviar
@@ -240,7 +249,7 @@ def receive_update():
     
     tabela_atualizada = False
     
-    for network, info in sender_table:
+    for network, info in sender_table.items():
         
     # 4. Calcule o novo custo para chegar à `network`:
     #    novo_custo = custo_do_link_direto + info['cost']
