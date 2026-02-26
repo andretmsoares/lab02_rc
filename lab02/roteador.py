@@ -110,7 +110,7 @@ class Router:
         bloco = 2 ** (32 - prefix1)
 
         # verifica se sao adjacentes
-        if abs(ip1_int - ip2_int) != bloco: return None
+        if abs(ip1_int ^ ip2_int) != bloco: return None
 
         novo_prefixo = prefix1 - 1
         mask = (0xFFFFFFFF << (32 - novo_prefixo)) & 0xFFFFFFFF
@@ -160,6 +160,68 @@ class Router:
         for net in removidas:
             tabela.pop(net, None)
 
+    def summarize_non_contiguous(self, tabela):
+        grupos = {}
+        nova_tabela = {}
+
+        # 1. Separa as rotas sumarizáveis por next_hop
+        for net, info in tabela.items():
+            # Ignora chaves que não são redes CIDR (ex: '127.0.0.1:5001')
+            if '/' not in net:
+                nova_tabela[net] = info
+                continue
+                
+            nh = info['next_hop']
+            if nh not in grupos:
+                grupos[nh] = []
+            grupos[nh].append((net, info['cost']))
+
+        # 2. Processa cada grupo encontrando o Maior Prefixo Comum (LCP)
+        for nh, rotas in grupos.items():
+            if len(rotas) == 1:
+                # Se só tem uma rota para esse next_hop, mantém como está
+                net, cost = rotas[0]
+                nova_tabela[net] = {'cost': cost, 'next_hop': nh}
+            else:
+                ips_int = []
+                max_cost = -1
+                for net, cost in rotas:
+                    ip_str, prefix_str = net.split('/')
+                    ips_int.append(self.ip_to_int(ip_str))
+                    # O custo da rota sumarizada deve ser o maior custo do grupo
+                    if cost > max_cost:
+                        max_cost = cost
+                
+                min_ip = min(ips_int)
+                max_ip = max(ips_int)
+                
+                # XOR entre o menor e o maior IP para achar os bits diferentes
+                diff = min_ip ^ max_ip
+                
+                # Conta quantos bits da direita para a esquerda precisam ser zerados (a máscara)
+                shift = 0
+                while diff > 0:
+                    diff >>= 1
+                    shift += 1
+                
+                # Calcula a nova máscara e o novo IP base
+                novo_prefixo = 32 - shift
+                
+                if novo_prefixo < 8:
+                  novo_prefixo = 8
+    
+                mask = (0xFFFFFFFF << shift) & 0xFFFFFFFF
+                supernet_int = min_ip & mask
+                supernet_ip = self.int_to_ip(supernet_int)
+                
+                nova_tabela[f"{supernet_ip}/{novo_prefixo}"] = {
+                    'cost': max_cost,
+                    'next_hop': nh
+                }
+        
+        tabela.clear()
+        tabela.update(nova_tabela)
+
     def send_updates_to_neighbors(self):
         """
         Envia a tabela de roteamento (potencialmente sumarizada) para todos os vizinhos.
@@ -177,10 +239,8 @@ class Router:
         tabela_para_enviar = copy.deepcopy(self.routing_table) # ATENÇÃO: Substitua pela cópia sumarizada.
 
         # Sumarizando a cópia
-        #print("ENTRANDO EM SUMMARIZE")
-        self.summarize(tabela_para_enviar)
-        #print("SAINDO DE SUMMARIZE")
-        
+        self.summarize_non_contiguous(tabela_para_enviar)
+
         payload = {
             "sender_address": self.my_address,
             "routing_table": tabela_para_enviar
