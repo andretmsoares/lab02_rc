@@ -101,13 +101,13 @@ class Router:
         if prefix1 != prefix2: return None
 
         #transforma ip em int
-        ip1_int = self.int_to_ip(ip1)
-        ip2_int = self.int_to_ip(ip2)
+        ip1_int = self.ip_to_int(ip1)
+        ip2_int = self.ip_to_int(ip2)
 
         bloco = 2 ** (32 - prefix1)
 
         # verifica se sao adjacentes
-        if abs(ip1_int - ip2_int) != bloco: return None
+        if abs(ip1_int ^ ip2_int) != bloco: return None
 
         novo_prefixo = prefix1 - 1
         mask = (0xFFFFFFFF << (32 - novo_prefixo)) & 0xFFFFFFFF
