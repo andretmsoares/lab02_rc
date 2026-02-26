@@ -196,15 +196,16 @@ def get_routes():
     # TODO: Aluno! Este endpoint está parcialmente implementado para ajudar na depuração.
     # Você pode mantê-lo como está ou customizá-lo se desejar.
     # - mantenha o routing_table como parte da resposta JSON.
+    
     if router_instance:
         return jsonify({
-            "message": "Não implementado!.",
             "vizinhos" : router_instance.neighbors,
             "my_network": router_instance.my_network,
             "my_address": router_instance.my_address,
             "update_interval": router_instance.update_interval,
-            "routing_table": router_instance.routing_table # Exibe a tabela de roteamento atual (a ser implementada)
+            "routing_table": router_instance.routing_table 
         })
+        
     return jsonify({"error": "Roteador não inicializado"}), 500
 
 @app.route('/receive_update', methods=['POST'])
