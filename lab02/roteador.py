@@ -11,6 +11,9 @@ import requests
 from flask import Flask, jsonify, request
 
 class Router:
+    
+    INFINITY = 16
+    
     """
     Representa um roteador que executa o algoritmo de Vetor de Distância.
     """
@@ -239,7 +242,7 @@ class Router:
         tabela_para_enviar = copy.deepcopy(self.routing_table) # ATENÇÃO: Substitua pela cópia sumarizada.
 
         # Sumarizando a cópia
-        self.summarize_non_contiguous(tabela_para_enviar)
+        self.summarize(tabela_para_enviar)
 
         payload = {
             "sender_address": self.my_address,
@@ -316,7 +319,8 @@ def receive_update():
     
         custo_vizinho = info['cost']
         novo_custo = custo_direto + custo_vizinho
-        
+        if novo_custo >= Router.INFINITY:
+            novo_custo = Router.INFINITY
     # 5. Verifique sua própria tabela de roteamento:
     #    a. Se você não conhece a `network`, adicione-a à sua tabela com o
     #       `novo_custo` e o `next_hop` sendo o `sender_address`.
