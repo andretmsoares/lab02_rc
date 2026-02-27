@@ -256,6 +256,16 @@ class Router:
                 requests.post(url, json=payload, timeout=5)
             except requests.exceptions.RequestException as e:
                 print(f"Não foi possível conectar ao vizinho {neighbor_address}. Erro: {e}")
+                
+                tabela_alterada = False
+                for network, info in self.routing_table.items():
+                    # Se a rota passava por esse vizinho que caiu, e ainda não é INFINITY
+                    if info['next_hop'] == neighbor_address and info['cost'] < self.INFINITY:
+                        self.routing_table[network]['cost'] = self.INFINITY
+                        tabela_alterada = True
+                
+                if tabela_alterada:
+                    print(f"Rotas via {neighbor_address} foram marcadas como INFINITY (16).")
 
 # --- API Endpoints ---
 # Instância do Flask e do Roteador (serão inicializadas no main)
