@@ -316,7 +316,10 @@ def receive_update():
         
     # 4. Calcule o novo custo para chegar à `network`:
     #    novo_custo = custo_do_link_direto + info['cost']
-    
+        
+        if network == router_instance.my_address or network == router_instance.my_network:
+            continue
+          
         custo_vizinho = info['cost']
         novo_custo = custo_direto + custo_vizinho
         if novo_custo >= Router.INFINITY:
